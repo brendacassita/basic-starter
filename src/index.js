@@ -3,10 +3,11 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import About from "./pages/About";
+import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import DataProvider from "./providers/DataProvider";
-import Home from "./pages/Home";
+import Links from "./pages/Links";
+import LinkForm from "./pages/LinkForm";
+import LinkShow from "./pages/LinkShow";
 
 
 const NotFound = ()=>{
@@ -17,9 +18,10 @@ ReactDOM.render(
   <DataProvider>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<App />}>
-          <Route path="/about" element={<About />} />
-          <Route path="/home" element={<Home />} />
+        <Route  path="/" element={<App />}>
+          <Route index  element={<Links />} />
+          <Route path="/links/new" element={<LinkForm />} />
+          <Route path="/links/:id" element={<LinkShow />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

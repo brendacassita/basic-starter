@@ -9,10 +9,8 @@ function App() {
           borderBottom:'1px solid'
         }}
         >
-          <Link to='/home'>Home</Link> - {' '}
-          <Link to='/about'>About</Link>
+          <Link to='/'>Links</Link> 
         </nav>
-        <p>Outlet component here</p>
         <Outlet />
     </div>
   );
