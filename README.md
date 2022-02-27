@@ -2,6 +2,7 @@
 This is a CRUD tutorial with in API (database)
 
 github repos used here\
+[finished react app](https://github.com/jimibue/link-crud-with-api-sp22)\
 [staterProject](https://github.com/jimibue/router-context-starter-sp22)\
 [rails api](https://github.com/jimibue/links-api-sp22)
 ###  Getting Started: Setup Instructions
@@ -95,6 +96,47 @@ function App() {
 }
 
 export default App;
+```
+
+index.js
+```javascript
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
+import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import DataProvider from "./providers/DataProvider";
+import Links from "./pages/Links";
+import LinkForm from "./pages/LinkForm";
+import LinkShow from "./pages/LinkShow";
+
+
+const NotFound = ()=>{
+  return <p>path not found</p>
+}
+
+ReactDOM.render(
+  <DataProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route  path="/" element={<App />}>
+          <Route index  element={<Links />} />
+          <Route path="/links/new" element={<LinkForm />} />
+          <Route path="/links/:id" element={<LinkShow />} />
+          <Route path="/links/:id/edit" element={<LinkForm />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  </DataProvider>,
+  document.getElementById("root")
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
 ```
 
 ## What to next?
@@ -249,8 +291,7 @@ const Links = () => {
   return (
     <div>
       <h1>Links Page</h1>
-      <ReactRouterLink to="links/1">Show</ReactRouterLink>
-      <ReactRouterLink to="links/new">New</ReactRouterLink>
+     
       <p>CRUD TEST</p>
       <button onClick={getLinks}>get links</button>
       <button
@@ -264,6 +305,7 @@ const Links = () => {
       <button onClick={() => deleteLink(links[0]? links[0].id:1)}>delete links</button>
       <p>loading state: {loading ? 'true':'false'}</p>
       <p>error state: {error ? 'true':'false'}</p>
+      <ReactRouterLink to='links/new'>new link</ReactRouterLink>
       <code>
       {JSON.stringify(links)}
       </code>
@@ -272,5 +314,166 @@ const Links = () => {
 };
 
 export default Links;
+```
+
+### UI
+
+Ok now we have tested our provider and it seems to be working along side with our api
+from here we can start building out our components. let's first start with displaying our links
+
+Links.js
+```javascript
+   ....
+  const renderLinks = () => {
+    return links.map((link) => {
+      return (
+        <div
+          key={link.id}
+          style={{ margin: "20px", padding: "20px", border: "1px dashed red" }}
+        >
+          <h1>{link.title}</h1>
+          <a href={link.url} target="_blank">
+            {link.title}
+          </a>
+          <p>{link.description}</p>
+          <p>{link.username}</p>
+          {/* Not here that this will disable all  buttons, even when just one is clicked */}
+          <button disabled={loading} onClick={() => deleteLink(link.id)}>
+            delete
+          </button>
+          <ReactRouterLink to={`links/${link.id}`}>show</ReactRouterLink>
+          <ReactRouterLink to={`links/${link.id}/edit`}>edit</ReactRouterLink>
+        </div>
+      );
+    });
+  };
+    ...
+```
+
+## LinkShow UI
+there are two ways we could grab the data when we go to LinkShow page, we could pass it through with react router or we could do an api call when the page loads... let's do the later. but to do that we will need the useEffect hook.  The useEffect hook allows to run code when our components 'mounts' to the dom (ie when it load to the browser)
+
+```javascript
+    useEffect(()=>{
+        // cb runs when component mounts
+    },[])
+```
+
+LinkShow.js
+```javascript
+// renaming react router Link component to ReactRouterLink
+// to not get confused with our Link component
+import axios from "axios"
+import { useEffect, useState } from "react"
+import { Link as ReactRouterLink, useParams } from "react-router-dom"
+import LinkForm from "./LinkForm"
+
+
+const LinkShow = ()=>{
+    // just grabbing on link expect it to be an object
+
+    const [link, setLink] = useState({})
+    const [loading, setLoading] = useState(true)
+    const [editing, setEditing] = useState(false)
+    // need to grab id form url
+    const {id} = useParams()
+    useEffect(()=>{
+        getLink()
+    },[])
+
+    // we can do axios calls and have state outside of out provider
+    const getLink = async ()=>{
+        // get => 'api/links/:id
+       let res = await axios.get(`https://link-app-sp22.herokuapp.com/api/links/${id}`)
+       setLink(res.data)
+       setLoading(false)
+    }
+    if(loading) return <p>loading</p>
+    // need to pass setEditing so that we can change editing state there...
+    // This does not go to /links/:id/edit page, it just shows it here
+    // in the links/:id page (LinkShow)
+    if( editing) return <LinkForm setEditing={setEditing} {...link}/>
+    return (
+        <div>
+            <h1>LinkShow Page</h1>
+            {JSON.stringify(link)}
+            <button onClick={()=> setEditing(true)}>edit</button>
+            <ReactRouterLink to='/'>back</ReactRouterLink>
+        </div>
+    )
+}
+
+export default LinkShow
+```
+
+
+## LinkForm.js
+```javascript
+import { useContext, useState } from "react"
+import { Link as ReactRouterLink, useLocation, useNavigate, useParams } from "react-router-dom"
+import { DataContext } from "../providers/DataProvider"
+const LinkForm = (props)=>{
+    // grab our global data and setters.
+    const {updateLink, addLink, error} =  useContext(DataContext)
+    // used to navigate to different links
+    const navigate = useNavigate()
+    // used to location.state to grab data sent by link
+    const {state} = useLocation()
+    // used to grab id from url
+    const params = useParams()
+    // check to see if we get a title from props, if not check to see if we get it from router
+    // if not just set to empty
+    const [title, setTitle] = useState(props.title || state && state.title || '')
+    const [description, setDescription] = useState(props.description || state && state.description || '')
+    const [username, setUsername] = useState(props.username || state && state.username || '')
+    const [url, setUrl] = useState(props.url || state && state.url || '')
+    // console.log('location', location)
+    const handleSubmit = (e)=>{
+        e.preventDefault()
+        // if we have an id it is an edit
+        let linkData = {title, description, username, url }
+        if(params.id){
+            updateLink({id:params.id, ...linkData })
+            // HMM.. it updates to DB but not to UI we have to refresh to
+            // see the changes
+            navigateBack()
+        } else {
+            addLink(linkData)
+            // go back to links page
+            navigate('/')
+        }
+    }
+    const navigateBack = ()=>{
+        // confusing here
+        if(props.id){
+          props.setEditing(false)
+        } else{
+           navigate('/')
+        }
+    }
+    return (
+        <div>
+            <h1>LinkForm Page</h1>
+            {error && <p>ERROR OCCURED</p>}
+            <ReactRouterLink to='/'>back</ReactRouterLink>
+
+            <form onSubmit={handleSubmit} style={{border:'1px dashed red'}}>
+                <p>title</p>
+                <input value={title} onChange={(e)=>setTitle(e.target.value)} />
+                <p>description</p>
+                <input value={description} onChange={(e)=>setDescription(e.target.value)} />
+                <p>username</p>
+                <input required value={username} onChange={(e)=>setUsername(e.target.value)} />
+                <p>url</p>
+                <input required value={url} onChange={(e)=>setUrl(e.target.value)} />
+                <br />
+                <button type='submit'>{params.id  ? 'update':'add'}</button>
+                <button onClick={navigateBack}>cancel</button>
+            </form>
+        </div>
+    )
+}
+
+export default LinkForm
 ```
 

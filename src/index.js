@@ -22,6 +22,7 @@ ReactDOM.render(
           <Route index  element={<Links />} />
           <Route path="/links/new" element={<LinkForm />} />
           <Route path="/links/:id" element={<LinkShow />} />
+          <Route path="/links/:id/edit" element={<LinkForm />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

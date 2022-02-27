@@ -34,6 +34,7 @@ const DataProvider = (props) => {
   };
 
   const addLink = async (linkData) => {
+    console.log('linkData:', linkData)
     beforeApiCallSetup();
     try {
       // try to create link to db... post 'api/links'
@@ -43,12 +44,13 @@ const DataProvider = (props) => {
       );
       console.log(res.data);
       // add res.data (the created link from db) to links as this has the id
-      setLinks([...links, res.data]);
+      setLinks([res.data, ...links]);
     } catch (err) {
       // there is backend validation checking for specific usernames, this 
       // is where you would handle that and other cases where link
       // was not saved to db
       console.log(err);
+      debugger
       alert("err occured getting links");
       setError(true);
     } finally {

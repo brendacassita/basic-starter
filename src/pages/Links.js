@@ -5,27 +5,43 @@ import { Link as ReactRouterLink } from "react-router-dom";
 import { DataContext } from "../providers/DataProvider";
 
 const Links = () => {
-  let { links, getLinks, addLink, updateLink, deleteLink,loading,error } =
+  let { links, getLinks, addLink, updateLink, deleteLink, loading, error } =
     useContext(DataContext);
+
+  const renderLinks = () => {
+    return links.map((link) => {
+      return (
+        <div
+          key={link.id}
+          style={{ margin: "20px", padding: "20px", border: "1px dashed red" }}
+        >
+          <h1>{link.title}</h1>
+          <a href={link.url} target="_blank">
+            {link.title}
+          </a>
+          <p>{link.description}</p>
+          <p>{link.username}</p>
+          {/* Not here that this will disable all  buttons, even when just one is clicked */}
+          <button disabled={loading} onClick={() => deleteLink(link.id)}>
+            delete
+          </button>
+          <ReactRouterLink to={`links/${link.id}`}>show</ReactRouterLink>
+          <ReactRouterLink to={`links/${link.id}/edit`} state={{...link}}>edit</ReactRouterLink>
+        </div>
+      );
+    });
+  };
   return (
     <div>
       <h1>Links Page</h1>
-      <ReactRouterLink to="links/1">Show</ReactRouterLink>
-      <ReactRouterLink to="links/new">New</ReactRouterLink>
-      <p>CRUD TEST</p>
+
+      <ReactRouterLink to='links/new'>new link</ReactRouterLink>
       <button onClick={getLinks}>get links</button>
-      <button
-        onClick={() => addLink({ username: "jamesy", title: "from react" })}
-      >
-        add links
-      </button>
-      <button onClick={() => updateLink({ ...links, title: "ChAnGED" })}>
-        update links
-      </button>
-      <button onClick={() => deleteLink(links[0]? links[0].id:1)}>delete links</button>
-      <p>loading state: {loading ? 'true':'false'}</p>
-      <p>error state: {error ? 'true':'false'}</p>
-      {JSON.stringify(links)}
+      <p>CRUD TEST</p>
+   
+      <p>loading state: {loading ? "true" : "false"}</p>
+      <p>error state: {error ? "true" : "false"}</p>
+      {renderLinks()}
     </div>
   );
 };
